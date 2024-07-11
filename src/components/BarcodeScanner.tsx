@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BarcodeFormat, DecodeHintType, BrowserMultiFormatReader } from '@zxing/library';
+import { BarcodeFormat, DecodeHintType, BrowserMultiFormatReader, Exception } from '@zxing/library';
 
 interface BarcodeScannerProps {
   onScan: (result: string) => void;
@@ -42,7 +42,7 @@ export function BarcodeScanner({ onScan }: BarcodeScannerProps) {
         if (result) {
           onScan(result.getText());
         }
-        if (err && !(err instanceof ZXing.NotFoundException)) {
+        if (err && !(err instanceof Exception)) {
           console.error(err);
         }
       });
