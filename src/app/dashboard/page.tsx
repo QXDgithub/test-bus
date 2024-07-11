@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { User } from '@supabase/auth-helpers-nextjs';
 
 export default function Dashboard() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
   const supabase = createClientComponentClient();
 
@@ -62,12 +63,12 @@ export default function Dashboard() {
     },
     form: {
       display: 'flex',
-      flexDirection: 'column',
+      flexDirection: 'column' as 'column',
       gap: '1rem',
     },
     label: {
       display: 'flex',
-      flexDirection: 'column',
+      flexDirection: 'column' as 'column',
       gap: '0.5rem',
     },
     select: {
