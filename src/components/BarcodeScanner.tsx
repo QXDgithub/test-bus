@@ -1,68 +1,84 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { BarcodeFormat, DecodeHintType, BrowserMultiFormatReader, Exception } from '@zxing/library';
+import React, { useState, useEffect, useRef } from 'react';
+import Quagga from 'quagga';
 
 interface BarcodeScannerProps {
   onScan: (result: string) => void;
 }
 
+interface QuaggaResult {
+  codeResult: {
+    code: string;
+  };
+}
+
 export function BarcodeScanner({ onScan }: BarcodeScannerProps) {
-  const [selectedDeviceId, setSelectedDeviceId] = useState('');
-  const [videoInputDevices, setVideoInputDevices] = useState<MediaDeviceInfo[]>([]);
+  const [isScanning, setIsScanning] = useState(false);
+  const scannerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const hints = new Map();
-    const formats = [BarcodeFormat.QR_CODE, BarcodeFormat.EAN_13, BarcodeFormat.CODE_128];
-    hints.set(DecodeHintType.POSSIBLE_FORMATS, formats);
-    const reader = new BrowserMultiFormatReader(hints);
-
-    reader.listVideoInputDevices().then((videoInputDevices) => {
-      setVideoInputDevices(videoInputDevices);
-      if (videoInputDevices.length > 0) {
-        setSelectedDeviceId(videoInputDevices[0].deviceId);
-      }
-    }).catch((err) => {
-      console.error(err);
-    });
-
-    return () => {
-      reader.reset();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (selectedDeviceId) {
-      const hints = new Map();
-      const formats = [BarcodeFormat.QR_CODE, BarcodeFormat.EAN_13, BarcodeFormat.CODE_128];
-      hints.set(DecodeHintType.POSSIBLE_FORMATS, formats);
-      const reader = new BrowserMultiFormatReader(hints);
-
-      reader.decodeFromVideoDevice(selectedDeviceId, 'video', (result, err) => {
-        if (result) {
-          onScan(result.getText());
+  const startScanner = () => {
+    if (scannerRef.current) {
+      Quagga.init(
+        {
+          inputStream: {
+            type: 'LiveStream',
+            constraints: {
+              width: 640,
+              height: 480,
+              facingMode: 'environment', // or "user" for front camera
+            },
+            target: scannerRef.current,
+          },
+          decoder: {
+            readers: ['ean_reader', 'code_128_reader'],
+          },
+        },
+        (err: any) => {
+          if (err) {
+            console.error('Error initializing Quagga:', err);
+            return;
+          }
+          Quagga.start();
+          setIsScanning(true);
         }
-        if (err && !(err instanceof Exception)) {
-          console.error(err);
+      );
+
+      Quagga.onDetected((result: QuaggaResult) => {
+        if (result.codeResult.code) {
+          onScan(result.codeResult.code);
+          stopScanner();
         }
       });
-
-      return () => {
-        reader.reset();
-      };
     }
-  }, [selectedDeviceId, onScan]);
+  };
+
+  const stopScanner = () => {
+    Quagga.stop();
+    setIsScanning(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (isScanning) {
+        Quagga.stop();
+      }
+    };
+  }, [isScanning]);
 
   return (
     <div>
-      <select onChange={(e) => setSelectedDeviceId(e.target.value)}>
-        {videoInputDevices.map((device) => (
-          <option key={device.deviceId} value={device.deviceId}>
-            {device.label}
-          </option>
-        ))}
-      </select>
-      <video id="video" width="300" height="200" style={{ border: '1px solid gray' }}></video>
+      <div ref={scannerRef} style={{ width: '100%', maxWidth: '640px', margin: '0 auto' }} />
+      {!isScanning && (
+        <button onClick={startScanner} style={{ display: 'block', margin: '10px auto' }}>
+          Start Scanner
+        </button>
+      )}
+      {isScanning && (
+        <button onClick={stopScanner} style={{ display: 'block', margin: '10px auto' }}>
+          Stop Scanner
+        </button>
+      )}
     </div>
   );
 }
