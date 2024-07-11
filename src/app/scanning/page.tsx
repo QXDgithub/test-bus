@@ -10,8 +10,8 @@ export default function Scanning() {
   const supabase = createClientComponentClient();
   const [scannedCode, setScannedCode] = useState('');
   const [manualInput, setManualInput] = useState('');
-  const [dashboardData, setDashboardData] = useState(null);
-  const inputRef = useRef(null);
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function checkUser() {
