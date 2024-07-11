@@ -26,7 +26,7 @@ export default function SignIn() {
         setError(error.message);
       } else {
         console.log('Sign in successful', data);
-        window.location.href = '/dashboard';
+        router.push('/dashboard');
       }
     } catch (err) {
       console.error('Unexpected error:', err);
@@ -34,7 +34,7 @@ export default function SignIn() {
     }
   };
 
-  const styles = {
+  const styles: { [key: string]: React.CSSProperties } = {
     container: {
       display: 'flex',
       justifyContent: 'center',
